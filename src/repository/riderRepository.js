@@ -1,41 +1,62 @@
 const Rider = require("../schema/riderSchema");
 
-const findRider = async (parameters) => {
+async function createRider(riderDetails) {
+  try {
+    const response = await Rider.create(riderDetails);
+    return response;
+  } catch (error) {
+    console.log("Error in createRider:", error);
+  }
+}
+
+async function findRider(parameters) {
   try {
     const response = await Rider.findOne({ ...parameters });
     return response;
   } catch (error) {
-    console.log(error);
+    console.log("Error in findRider:", error);
   }
 }
 
-async function createRider(riderDetails) {
-    try {
-        const response = await Rider.create(riderDetails);
-        return response;
-    } catch(error){
-        console.log(error)
-    }
+async function getRiderById(riderId) {
+  try {
+    const response = await Rider.findById(riderId);
+    return response;
+  } catch (error) {
+    console.log("Error in getRiderById:", error);
+  }
 }
 
-const getRiderById = async (riderId) => {
-  return await Rider.findById(riderId);
-};
+async function getRiderByPhoneNumber(phoneNumber) {
+  try {
+    const response = await Rider.findOne({ phoneNumber });
+    return response;
+  } catch (error) {
+    console.log("Error in getRiderByPhoneNumber:", error);
+  }
+}
 
-const getRiderByPhoneNumber = async (phoneNumber) => {
-  return await Rider.findOne({ phoneNumber });
-};
+async function updateRiderById(riderId, updateData) {
+  try {
+    const response = await Rider.findByIdAndUpdate(riderId, updateData, { new: true });
+    return response;
+  } catch (error) {
+    console.log("Error in updateRiderById:", error);
+  }
+}
 
-const updateRiderById = async (riderId, updateData) => {
-  return await Rider.findByIdAndUpdate(riderId, updateData, { new: true });
-};
-
-const deleteRiderById = async (riderId) => {
-  return await Rider.findByIdAndDelete(riderId);
-};
+async function deleteRiderById(riderId) {
+  try {
+    const response = await Rider.findByIdAndDelete(riderId);
+    return response;
+  } catch (error) {
+    console.log("Error in deleteRiderById:", error);
+  }
+}
 
 module.exports = {
   createRider,
+  findRider,
   getRiderById,
   getRiderByPhoneNumber,
   updateRiderById,

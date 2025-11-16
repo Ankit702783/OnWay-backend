@@ -1,7 +1,7 @@
 const axios=require('axios');
 const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
-// Base rates per km
+
 const FARE_RATES = {
   bike: 8,
   auto: 12,
@@ -10,7 +10,7 @@ const FARE_RATES = {
 
 async function getRideEstimate(pickup, drop) {
   try {
-    // Call Google Distance Matrix API
+   
     const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
       pickup
     )}&destinations=${encodeURIComponent(drop)}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
@@ -23,9 +23,8 @@ async function getRideEstimate(pickup, drop) {
 
     const distanceText = data.rows[0].elements[0].distance.text;
     const durationText = data.rows[0].elements[0].duration.text;
-    const distanceValue = data.rows[0].elements[0].distance.value / 1000; // in km
+    const distanceValue = data.rows[0].elements[0].distance.value / 1000; 
 
-    // Calculate fare
     
     const baseFare = 5; 
    

@@ -1,8 +1,9 @@
-const { registerRider,
+const {riderfind,
+  registerRider,
   fetchRiderById,
   fetchRiderByPhoneNumber,
   modifyRiderById,
-  removeRiderById,} = require('../services/riderService');
+  removeRiderById} = require('../services/riderService');
 
 const registerNewRider = async (req, res) => {
     try {
@@ -27,22 +28,8 @@ const getRiderDetails = async (req, res) => {
     }
 };
 
-const updateRiderCurrentLocation = async (req, res) => {
-    try {
-        const riderId = req.params.id;
-        const { lat, lng } = req.body;
-        const updatedRider = await updateRiderLocation(riderId, { currentLocation: { lat, lng } });
-        if (!updatedRider) {
-            return res.status(404).json({ error: 'Rider not found' });
-        }
-        res.status(200).json(updatedRider);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to update rider location' });
-    }
-};
 
 module.exports = {
     registerNewRider,
-    getRiderDetails,
-    updateRiderCurrentLocation,
+    getRiderDetails
 };  

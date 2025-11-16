@@ -1,26 +1,69 @@
-const {findRider, createRider, getRiderById, getRiderByPhoneNumber, updateRiderById, deleteRiderById} = require("../repository/riderRepository");
+const {
+  findRider,
+  createRider,
+  getRiderById,
+  getRiderByPhoneNumber,
+  updateRiderById,
+  deleteRiderById,
+} = require("../repository/riderRepository");
 
-const registerRider = async (riderDetails) => {
-  return await createRider(riderDetails);
-};
 
-const fetchRiderById = async (riderId) => {
-  return await getRiderById(riderId);
-};
+async function riderfind(parameters) {
+  try {
+    const response = await findRider(parameters);
+    return response;
+  } catch (error) {
+    console.log("Error in riderfind:", error);
+  }
+}
 
-const fetchRiderByPhoneNumber = async (phoneNumber) => {
-  return await getRiderByPhoneNumber(phoneNumber);
-};
+async function registerRider(riderDetails) {
+  try {
+    const response = await createRider(riderDetails);
+    return response;
+  } catch (error) {
+    console.log("Error in registerRider:", error);
+  }
+}
 
-const modifyRiderById = async (riderId, updateData) => {
-  return await updateRiderById(riderId, updateData);
-};
+async function fetchRiderById(riderId) {
+  try {
+    const response = await getRiderById(riderId);
+    return response;
+  } catch (error) {
+    console.log("Error in fetchRiderById:", error);
+  }
+}
 
-const removeRiderById = async (riderId) => {
-  return await deleteRiderById(riderId);
-};
+async function fetchRiderByPhoneNumber(phoneNumber) {
+  try {
+    const response = await getRiderByPhoneNumber(phoneNumber);
+    return response;
+  } catch (error) {
+    console.log("Error in fetchRiderByPhoneNumber:", error);
+  }
+}
+
+async function modifyRiderById(riderId, updateData) {
+  try {
+    const response = await updateRiderById(riderId, updateData);
+    return response;
+  } catch (error) {
+    console.log("Error in modifyRiderById:", error);
+  }
+}
+
+async function removeRiderById(riderId) {
+  try {
+    const response = await deleteRiderById(riderId);
+    return response;
+  } catch (error) {
+    console.log("Error in removeRiderById:", error);
+  }
+}
 
 module.exports = {
+  riderfind,
   registerRider,
   fetchRiderById,
   fetchRiderByPhoneNumber,

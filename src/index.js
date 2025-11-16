@@ -4,6 +4,7 @@ const serverConfig = require('./config/serverConfig')
 const userRouter = require('./routes/userRouter')
 const authRouter = require('./routes/authRouter')
 const rideRouter = require('./routes/rideRouter')
+const riderRouter = require('./routes/riderRouter')
 
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
@@ -36,6 +37,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/users',userRouter)
 app.use('/auth',authRouter)
 app.use('/ride',rideRouter)
+app.use('/rider', riderRouter);
+
 
 
 app.get('/hii',(req,res)=>{
