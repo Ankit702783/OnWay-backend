@@ -1,4 +1,10 @@
 const express = require('express')
+const http = require("http");
+const { initSocket } = require("./socket");
+
+
+
+
 const connectDB = require('./config/dbConfig')
 const serverConfig = require('./config/serverConfig')
 const userRouter = require('./routes/userRouter')
@@ -11,6 +17,7 @@ const cookieParser = require('cookie-parser')
 const PORT = serverConfig.PORT  
 const app = express()
 
+const server = http.createServer(app);
 
 app.use(cookieParser())
 app.use(express.json())
@@ -20,7 +27,10 @@ app.use(express.text());
 
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174'
+  ],
   credentials: true
 }));
 
@@ -46,7 +56,10 @@ app.get('/hii',(req,res)=>{
     return res.json({message:'hello'})
 
 })
-app.listen(PORT,async ()=>{
-    await connectDB()
-    console.log(`Server is running on port ${PORT}`)
-})
+server.listen(PORT, async () => {
+  await connectDB();
+  initSocket(server);
+  console.log(`Server running on ${PORT}`);
+});
+
+

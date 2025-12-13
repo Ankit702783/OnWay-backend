@@ -1,11 +1,18 @@
-const { loginUser, sendOTP, verifyUserOTP ,sendPhoneOTP, verifyPhoneUserOTP} = require("../services/authService");
-const { COOKIE_SECURE ,GMAIL_PASS,GMAIL_USER} = require("../config/serverConfig");
+const { 
+    loginUser, 
+    sendOTP, 
+    verifyUserOTP,
+    sendPhoneOTP,
+    verifyPhoneUserOTP
+} = require("../services/authService");
+
+const { COOKIE_SECURE } = require("../config/serverConfig");
 
 
+/* -------------------- EMAIL + PASSWORD LOGIN -------------------- */
 async function login(req, res) {
     try {
-        const loginPayload = req.body;
-        const response = await loginUser(loginPayload);
+        const response = await loginUser(req.body);
 
         res.cookie("authToken", response.token, {
             httpOnly: true,
@@ -14,28 +21,23 @@ async function login(req, res) {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        return res.status(200).json({
+        res.status(200).json({
             success: true,
-            message: 'Logged in successfully',
-            data: {
-                userRole: response.userRole,
-                userData: response.userData,
-                token: response.token,
-            },
-            error: {}
+            message: "Logged in successfully",
+            data: response,
         });
 
     } catch (error) {
-        return res.status(error.statusCode || 500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
-            data: {},
             message: error.message || "Login failed",
-            error: error
+            data: {},
         });
     }
 }
 
 
+/* -------------------- LOGOUT -------------------- */
 async function logout(req, res) {
     res.cookie("authToken", "", {
         httpOnly: true,
@@ -44,40 +46,38 @@ async function logout(req, res) {
         maxAge: 0,
     });
 
-    return res.status(200).json({
+    res.status(200).json({
         success: true,
         message: "Log out successful",
-        error: {},
         data: {}
     });
 }
 
 
+/* -------------------- EMAIL OTP SEND -------------------- */
 async function sendOtpController(req, res) {
     try {
-        const { email } = req.body;
-        const response = await sendOTP(email);
+        const response = await sendOTP(req.body.email);
 
-        return res.status(200).json({
+        res.status(200).json({
             success: true,
             message: response.message,
-            data: {},
-            error: {}
         });
+
     } catch (error) {
-        return res.status(error.statusCode || 500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
-            data: {},
             message: error.message || "Failed to send OTP",
-            error: error
+            data: {}
         });
     }
 }
 
+
+/* -------------------- EMAIL OTP VERIFY -------------------- */
 async function verifyOtpController(req, res) {
     try {
-        const { email, otp } = req.body;
-        const response = await verifyUserOTP(email, otp);
+        const response = await verifyUserOTP(req.body.email, req.body.otp);
 
         res.cookie("authToken", response.token, {
             httpOnly: true,
@@ -86,78 +86,70 @@ async function verifyOtpController(req, res) {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        return res.status(200).json({
+        res.status(200).json({
             success: true,
             message: "OTP verified successfully",
-            data: {
-                userRole: response.userRole,
-                userData: response.userData,
-                token: response.token
-            },
-            error: {}
+            data: response,
         });
 
     } catch (error) {
-        return res.status(error.statusCode || 500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
-            data: {},
             message: error.message || "OTP verification failed",
-            error: error
+            data: {}
         });
     }
 }
 
 
-
-
+/* -------------------- PHONE OTP SEND (ONLY IF USER EXISTS) -------------------- */
 async function sendOtpPhoneController(req, res) {
-  try {
-    const { contactNumber } = req.body;
-    const response = await sendPhoneOTP(contactNumber);
+    try {
+        const response = await sendPhoneOTP(req.body.contactNumber);
 
-    res.status(200).json({
-      success: true,
-      message: response.message,
-      data: {},
-      error: {},
-    });
-  } catch (error) {
-    res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.message || "Failed to send OTP",
-      error,
-      data: {},
-    });
-  }
+        res.status(200).json({
+            success: true,
+            message: response.message,
+        });
+
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message,
+            data: {}
+        });
+    }
 }
 
+
+/* -------------------- PHONE OTP VERIFY → RETURN TOKEN + USER -------------------- */
 async function verifyOtpPhoneController(req, res) {
-  try {
-    const { contactNumber, otp } = req.body;
-    const response = await verifyPhoneUserOTP(contactNumber, otp);
+    try {
+        const response = await verifyPhoneUserOTP(req.body.contactNumber, req.body.otp);
 
-    res.cookie("authToken", response.token, {
-      httpOnly: true,
-      secure: COOKIE_SECURE,
-      sameSite: COOKIE_SECURE ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, 
-    });
+        res.cookie("authToken", response.token, {
+            httpOnly: true,
+            secure: COOKIE_SECURE,
+            sameSite: COOKIE_SECURE ? "none" : "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
 
-    res.status(200).json({
-      success: true,
-      message: "OTP verified successfully",
-      data: response,
-      error: {},
-    });
-  } catch (error) {
-    res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.message || "OTP verification failed",
-      error,
-      data: {},
-    });
-  }
+        res.status(200).json({
+            success: true,
+            message: "OTP verified successfully",
+            data: response,
+        });
+
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message,
+            data: {}
+        });
+    }
 }
+
+
 
 module.exports = {
     login,
