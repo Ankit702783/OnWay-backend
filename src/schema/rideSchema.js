@@ -13,6 +13,7 @@ const SlipItemSchema = new mongoose.Schema({
 });
 
 const RideSchema = new mongoose.Schema({
+  id:{ type: String },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, 
   driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Rider', default: null },
 

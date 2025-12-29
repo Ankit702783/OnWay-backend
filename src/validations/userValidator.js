@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET, COOKIE_SECURE} = require('../config/serverConfig');
 
 
-async function isLoggedIn(req, res, next) {
+async function isLogIn(req, res, next) {
     
     const token = req.cookies["authToken"];
     console.log("token :",token);
@@ -61,5 +61,5 @@ async function isLoggedIn(req, res, next) {
 
 
 module.exports = {
-    isLoggedIn
+    isLogIn
 }

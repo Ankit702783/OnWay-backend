@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: [true, "password is required"] },
   otp: { type: String },
 otpExpiry: { type: Date },
+socketId: { type: String },
 
 
   

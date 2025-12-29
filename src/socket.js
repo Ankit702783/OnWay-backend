@@ -1,101 +1,164 @@
-// socket.js
 const { Server } = require("socket.io");
+const Ride = require("./schema/rideSchema");
+const Rider = require("./schema/riderSchema");
 
 let io;
-let onlinePilots = {};   // pilotId -> socketId
-let onlineUsers = {};    // userId  -> socketId
+let onlinePilots = {};
+let onlineUsers = {};
 
 function initSocket(server) {
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+  ];
+
   io = new Server(server, {
     cors: {
-      origin: "http://localhost:5173",
-      methods: ["GET", "POST"]
-    }
+      origin: allowedOrigins,
+      methods: ["GET", "POST"],
+    },
   });
 
-  console.log("⚡ Socket.IO Initialized");
+  console.log("Socket.IO Initialized");
 
   io.on("connection", (socket) => {
+    console.log("Client Connected:", socket.id);
 
-    console.log("🔥 Client Connected:", socket.id);
-
-    // =====================================================
-    // 1️⃣ USER JOIN SOCKET
-    // =====================================================
     socket.on("user_join", (userId) => {
-      onlineUsers[userId] = socket.id;
-      socket.join(`user_${userId}`);   // Joining room for user
-      console.log(`🟢 User Joined Room: user_${userId}`);
+      if (!userId) return;
+
+      const uid = userId.toString();
+      onlineUsers[uid] = socket.id;
+
+      console.log("User Joined:", uid, "socket:", socket.id);
+      console.log("onlineUsers:", onlineUsers);
     });
 
+    socket.on("pilot_online", async (pilotId) => {
+      if (!pilotId) return;
 
-    // =====================================================
-    // 2️⃣ PILOT ONLINE
-    // =====================================================
-    socket.on("pilot_online", (pilotId) => {
       onlinePilots[pilotId] = socket.id;
-      socket.join(`driver_${pilotId}`);   // Room for driver
-      console.log(`🟢 Pilot Online: driver_${pilotId}`);
-    });
 
-
-    // =====================================================
-    // 3️⃣ PILOT ACCEPT RIDE
-    // =====================================================
-    socket.on("pilot_accept", async ({ rideId, pilotId, userId }) => {
-      console.log("🚖 Pilot Accepted Ride:", rideId);
-
-      // Notify User
-      io.to(`user_${userId}`).emit("ride_accepted", {
-        rideId,
-        pilotId,
-        status: "accepted"
+      await Rider.findByIdAndUpdate(pilotId, {
+        isAvailable: true,
+        socketId: socket.id,
       });
+
+      console.log("Pilot Online:", pilotId, "socket:", socket.id);
     });
 
+    socket.on("pilot_offline", async (pilotId) => {
+      if (!pilotId) return;
 
-    // =====================================================
-    // 4️⃣ PILOT REJECT RIDE
-    // =====================================================
-    socket.on("pilot_reject", async ({ rideId, pilotId, userId }) => {
-      console.log("❌ Pilot Rejected Ride:", rideId);
+      delete onlinePilots[pilotId];
 
-      // Notify User
-      io.to(`user_${userId}`).emit("ride_rejected", {
-        rideId,
-        pilotId,
-        status: "rejected"
+      await Rider.findByIdAndUpdate(pilotId, {
+        isAvailable: false,
+        socketId: null,
       });
+
+      console.log("Pilot Offline:", pilotId);
     });
 
+    socket.on("pilot_accept", async ({ rideId, pilotId }) => {
+      try {
+        if (!rideId || !pilotId) return;
 
-    // =====================================================
-    // 5️⃣ PILOT LIVE LOCATION
-    // =====================================================
-    socket.on("pilot_location", ({ userId, lat, lng }) => {
-      io.to(`user_${userId}`).emit("pilot_live_location", { lat, lng });
+        const ride = await Ride.findOneAndUpdate(
+          { _id: rideId, status: "created" },
+          { status: "assigned", driverId: pilotId },
+          { new: true }
+        );
+        console.log("onlineUsers at accept:", onlineUsers);
+
+        if (!ride) {
+          console.log("Ride already taken:", rideId);
+          return;
+        }
+
+        const pilot = await Rider.findById(pilotId).select(
+          "fullName phoneNumber vehicleType"
+        );
+        const rides = await Ride.findById(rideId);
+
+        const userId = ride.userId?.toString();
+        const userSocketId = onlineUsers[userId];
+
+        console.log("Ride assigned:", rideId);
+
+        if (userSocketId) {
+          io.to(userSocketId).emit("ride_accepted", {
+            rideId,
+            status: "accepted",
+            pilot: {
+              id: pilot._id,
+              name: pilot.fullName,
+              phone: pilot.phoneNumber,
+              vehicleType: rides.vehicleType,
+            },
+          });
+
+          console.log("ride_accepted sent to user:", userId);
+        } else {
+          console.log("User not online:", userId);
+        }
+
+        for (let pid in onlinePilots) {
+          if (pid !== pilotId) {
+            io.to(onlinePilots[pid]).emit("ride_taken", rideId);
+          }
+        }
+      } catch (err) {
+        console.error("pilot_accept error:", err);
+      }
     });
 
+    socket.on("pilot_reject", ({ rideId, pilotId }) => {
+      console.log(`Pilot ${pilotId} rejected ride ${rideId}`);
+    });
 
-    // =====================================================
-    // 6️⃣ DISCONNECT LOGIC
-    // =====================================================
-    socket.on("disconnect", () => {
-      console.log("❌ Client Disconnected:", socket.id);
+    socket.on("pilot_location", async ({ pilotId, lat, lng }) => {
+      if (!pilotId) return;
 
-      // Remove pilot if disconnected
-      for (let id in onlinePilots) {
-        if (onlinePilots[id] === socket.id) {
-          delete onlinePilots[id];
-          console.log(`🔴 Pilot Offline: ${id}`);
+      await Rider.findByIdAndUpdate(pilotId, {
+        currentLocation: { lat, lng },
+      });
+
+      const activeRide = await Ride.findOne({
+        driverId: pilotId,
+        status: { $in: ["assigned", "on_trip"] },
+      });
+
+      if (activeRide) {
+        const userId = activeRide.userId?.toString();
+        const userSocketId = onlineUsers[userId];
+
+        if (userSocketId) {
+          io.to(userSocketId).emit("pilot_live_location", { lat, lng });
+        }
+      }
+    });
+
+    socket.on("disconnect", async () => {
+      console.log("Client Disconnected:", socket.id);
+
+      for (let pilotId in onlinePilots) {
+        if (onlinePilots[pilotId] === socket.id) {
+          delete onlinePilots[pilotId];
+
+          await Rider.findByIdAndUpdate(pilotId, {
+            isAvailable: false,
+            socketId: null,
+          });
+
+          console.log("Pilot Offline (disconnect):", pilotId);
         }
       }
 
-      // Remove user if disconnected
-      for (let id in onlineUsers) {
-        if (onlineUsers[id] === socket.id) {
-          delete onlineUsers[id];
-          console.log(`🔴 User Offline: ${id}`);
+      for (let userId in onlineUsers) {
+        if (onlineUsers[userId] === socket.id) {
+          delete onlineUsers[userId];
+          console.log("User Offline (disconnect):", userId);
         }
       }
     });

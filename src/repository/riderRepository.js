@@ -17,6 +17,34 @@ async function findRider(parameters) {
     console.log("Error in findRider:", error);
   }
 }
+async  function setRiderOTP(phoneNumber, otp, expiry) {
+  
+  return await Rider.findOneAndUpdate(
+    { phoneNumber },
+    { otp, otpExpiry: expiry },
+    { new: true }
+  );
+} 
+async function findRiderByPhone(phoneNumber) {
+  try {
+    const response = await Rider.findOne({ phoneNumber });
+    return response;
+  } catch (error) {
+    console.log("Error in findRiderByPhone:", error);
+  }
+}
+
+async function riderOtpVerify(phoneNumber, otp) {
+  try {
+    const rider = await Rider.findOne({ phoneNumber, otp });
+  
+    if (!rider) return null;
+    if (rider.otpExpiry < new Date()) return null;
+    return rider;
+  } catch (error) {
+    console.log("Error in riderOtpVerify:", error);
+  }
+}
 
 async function getRiderById(riderId) {
   try {
@@ -61,4 +89,6 @@ module.exports = {
   getRiderByPhoneNumber,
   updateRiderById,
   deleteRiderById,
+  findRiderByPhone,
+  riderOtpVerify,setRiderOTP
 };

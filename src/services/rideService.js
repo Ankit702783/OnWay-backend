@@ -1,4 +1,4 @@
-// rideService.js
+
 const axios = require('axios');
 const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
@@ -12,9 +12,7 @@ const FARE_RATES = {
   car: 18,
 };
 
-// =======================
-// ORIGINAL FUNCTION
-// =======================
+
 async function getRideEstimate(pickup, drop) {
   try {
     const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
@@ -52,9 +50,7 @@ async function getRideEstimate(pickup, drop) {
   }
 }
 
-// ===================================================
-// NEW: CREATE RIDE + GENERATE SLIP + SEND TO PILOT
-// ===================================================
+
 async function createRideAndGenerateSlip({
   userId,
   pickup,
@@ -62,7 +58,7 @@ async function createRideAndGenerateSlip({
   vehicleType = "bike",
   assignedDriverId = null
 }) {
-  // 1) First get the fare estimate (reuse your original logic)
+  
   const estimate = await getRideEstimate(pickup, drop);
 
   let fare;
@@ -70,7 +66,7 @@ async function createRideAndGenerateSlip({
   else if (vehicleType === "auto") fare = estimate.autofare;
   else fare = estimate.bikefare;
 
-  // 2) Build Ride Object for DB
+  
   const rideObj = {
     userId: userId || null,
     driverId: assignedDriverId || null,
@@ -101,10 +97,8 @@ async function createRideAndGenerateSlip({
     }
   };
 
-  // 3) Save Ride in DB
   const savedRide = await createRide(rideObj);
 
-  // 4) Prepare slip payload for pilot
   const slipPayload = {
     rideId: savedRide._id,
     slipId: savedRide.slip.slipId,
@@ -118,14 +112,14 @@ async function createRideAndGenerateSlip({
     userId: userId || null
   };
 
-  // 5) Send slip to pilot via socket
+  
   const io = getIO();
 
   if (assignedDriverId) {
-    // send to only that driver (if you have rooms)
+   
     io.to(`driver_${assignedDriverId}`).emit("new_ride_request", slipPayload);
   } else {
-    // broadcast to all online pilots
+ 
     io.emit("new_ride_request", slipPayload);
   }
 

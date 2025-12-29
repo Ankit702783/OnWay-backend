@@ -1,4 +1,5 @@
 const { findUser, setOTP, verifyOTP, clearOTP, createUser ,findUserByPhone, clearOTP2,setPhoneOTP, verifyPhoneOTP} = require('../repository/userRepository');
+const { findRiderByPhone,riderOtpVerify ,setRiderOTP} = require('../repository/riderRepository');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET, JWT_EXPIRY ,GMAIL_PASS,GMAIL_USER,TWILIO_SID,TWILIO_AUTH_TOKEN,TWILIO_PHONE} = require("../config/serverConfig");
@@ -10,7 +11,6 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-/* ---------------------- EMAIL LOGIN FLOW SAME ---------------------- */
 
 async function loginUser(authDetails) {
     const email = authDetails.email;
@@ -38,7 +38,7 @@ async function loginUser(authDetails) {
     };
 }
 
-/* ---------------------- EMAIL OTP LOGIN AS IT IS ---------------------- */
+
 
 async function sendOTP(email) {
     let user = await findUser({ email });
@@ -80,7 +80,7 @@ async function verifyUserOTP(email, otp) {
     };
 }
 
-/* ---------------------- FINAL UPDATED PHONE OTP FLOW ---------------------- */
+
 
 async function sendPhoneOTP(contactNumber) {
 
@@ -117,10 +117,46 @@ async function verifyPhoneUserOTP(contactNumber, otp) {
   };
 }
 
+
+async function sendRiderOTP(phoneNumber) {
+
+  const user = await findRiderByPhone(phoneNumber);
+  if (!user) throw { message: "User with given phone number does not exist", statusCode: 404 };
+
+  const otp = generateOTP();
+  const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+  await setRiderOTP(phoneNumber, otp, expiry);
+
+  await client.messages.create({
+    body: `Your OnWay OTP is: ${otp}`,
+    from: TWILIO_PHONE,
+    to: phoneNumber,
+  });
+
+  return { message: "OTP sent successfully" };
+}
+
+async function verifyRiderOTP(phoneNumber, otp) {
+  const user = await riderOtpVerify(phoneNumber, otp);
+  if (!user) throw { message: "Invalid or expired OTP", statusCode: 401 };
+
+  await clearOTP2(phoneNumber);
+  const token = jwt.sign({ id: user._id, phoneNumber }, JWT_SECRET, {
+    expiresIn: JWT_EXPIRY,
+  });
+
+  return {
+    token,
+    user,
+  };
+}
+
 module.exports = {
     loginUser,
     sendOTP,
     verifyUserOTP,
     sendPhoneOTP,
-    verifyPhoneUserOTP
+    verifyPhoneUserOTP,sendRiderOTP,
+    verifyRiderOTP
 };

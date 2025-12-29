@@ -2,14 +2,17 @@ const mongoose = require("mongoose");
 
 const riderSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
-  phoneNumber: { type: String, required: true, unique: true },
+  phoneNumber: { type: String, required: true },
   email: { type: String },
   password: { type: String },
   profilePic: { type: String },
+  role: { type: String, default: "pilot" },
+  otp: { type: String },
+  otpExpiry: { type: Date },
 
-  vehicleType: { type: String, required: true },
+  vehicleType: { type: String},
   vehicleModel: { type: String },
-  vehicleNumber: { type: String, required: true },
+  vehicleNumber: { type: String},
   licenseNumber: { type: String },
   rcBookPhoto: { type: String },
   licensePhoto: { type: String },
@@ -35,6 +38,7 @@ const riderSchema = new mongoose.Schema({
   documentsVerified: { type: Boolean, default: false },
   joinedAt: { type: Date, default: Date.now },
   status: { type: String, default: "pending" },
+  socketId: { type: String }
 });
 
 module.exports = mongoose.model("Rider", riderSchema);

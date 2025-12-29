@@ -1,4 +1,5 @@
 const User = require('../schema/userSchema');
+const Rider = require('../schema/riderSchema');
 
 async function findUser(parameters) {
     try {
@@ -8,6 +9,10 @@ async function findUser(parameters) {
         console.log(error);
     }
 } 
+
+
+
+
 
 async function createUser(userDetails) {
     try {
@@ -87,5 +92,6 @@ module.exports = {
      findUserByPhone,
   setPhoneOTP,
   verifyPhoneOTP,
-  clearOTP2
+  clearOTP2,
+  
 };

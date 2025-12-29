@@ -5,7 +5,8 @@ const {
     sendOtpController,
     verifyOtpController,
     sendOtpPhoneController,
-    verifyOtpPhoneController
+    verifyOtpPhoneController,sendOtp,
+    verifyOtp
 } = require('../controller/authController');
 
 const authRouter = express.Router();
@@ -20,5 +21,8 @@ authRouter.post('/verify-otp', verifyOtpController);
 
 authRouter.post("/send-phone-otp", sendOtpPhoneController);
 authRouter.post("/verify-phone-otp", verifyOtpPhoneController);
+
+authRouter.post("/send-rider-otp", sendOtp);
+authRouter.post("/verify-rider-otp", verifyOtp);
 
 module.exports = authRouter;
