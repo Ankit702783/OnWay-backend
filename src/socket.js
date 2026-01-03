@@ -77,26 +77,33 @@ function initSocket(server) {
         }
 
         const pilot = await Rider.findById(pilotId).select(
-          "fullName phoneNumber vehicleType"
+          "fullName phoneNumber vehicleType currentLocation"
         );
+
         const rides = await Ride.findById(rideId);
 
         const userId = ride.userId?.toString();
         const userSocketId = onlineUsers[userId];
+        
 
         console.log("Ride assigned:", rideId);
 
         if (userSocketId) {
           io.to(userSocketId).emit("ride_accepted", {
             rideId,
-            status: "accepted",
             pilot: {
-              id: pilot._id,
               name: pilot.fullName,
               phone: pilot.phoneNumber,
               vehicleType: rides.vehicleType,
-            },
+              location: {
+                lat: Number(pilot.currentLocation.lat),
+                lng: Number(pilot.currentLocation.lng),
+              }
+            }
           });
+          
+
+
 
           console.log("ride_accepted sent to user:", userId);
         } else {
@@ -138,6 +145,16 @@ function initSocket(server) {
         }
       }
     });
+    socket.on("pilot_location_init", async ({ pilotId, lat, lng }) => {
+      if (!pilotId) return;
+
+      await Rider.findByIdAndUpdate(pilotId, {
+        currentLocation: { lat, lng }
+      });
+
+      console.log("📍 Pilot location saved:", pilotId, lat, lng);
+    });
+
 
     socket.on("disconnect", async () => {
       console.log("Client Disconnected:", socket.id);
