@@ -28,6 +28,8 @@ app.use(express.text());
 
 app.use(cors({
   origin: [
+    'https://on-way.vercel.app',
+    'https://on-way-pilot.vercel.app',
     'http://localhost:5173',
     'http://localhost:5174'
   ],
