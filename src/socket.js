@@ -83,6 +83,7 @@ function initSocket(server) {
         const rides = await Ride.findById(rideId);
 
         const userId = ride.userId?.toString();
+        
         const userSocketId = onlineUsers[userId];
         
 

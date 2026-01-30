@@ -33,6 +33,8 @@ const riderSchema = new mongoose.Schema({
     ifscCode: { type: String },
     bankName: { type: String },
   },
+  pushSubscription: { type: Object ,default: null},
+
 
   isVerified: { type: Boolean, default: false },
   documentsVerified: { type: Boolean, default: false },
